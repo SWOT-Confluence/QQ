@@ -1,0 +1,11 @@
+# SWOT-Confluence QQ FLPE algorithm — Python dependencies
+#
+# Pin major.minor to match the SWOT-Confluence production environment.
+# Update pins only after compatibility testing.
+
+netCDF4>=1.6.5,<2.0
+numpy>=1.26.0,<2.0
+pandas>=2.1.0,<3.0
+
+# Optional: diagnostic plots (not required in production containers)
+# plotly>=5.18.0

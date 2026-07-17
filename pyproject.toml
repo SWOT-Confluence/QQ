@@ -1,0 +1,25 @@
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swot-confluence-qq"
+version = "1.0.0"
+description = "SWOT-Confluence QQ FLPE algorithm: quantile-quantile discharge estimation"
+requires-python = ">=3.10"
+dependencies = [
+    "netCDF4>=1.6.5",
+    "numpy>=1.26.0",
+    "pandas>=2.1.0",
+]
+
+[project.scripts]
+run_qq = "run_qq:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["qq*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
