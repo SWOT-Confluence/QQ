@@ -224,6 +224,62 @@ WSE_QUANT_FLAG_DEFINITION: dict[int, str] = {
 
 
 
+# ---------------------------------------------------------------------------
+# WSE–Q lookup table constants
+# ---------------------------------------------------------------------------
+# The lookup table relates WSE and discharge Q through a shared
+# non-exceedance probability axis, restricted to the OVERLAP of:
+#   - the empirical WSE quantile probability range
+#   - the SOS FDC probability range
+# No extrapolation is performed for either WSE or Q.
+
+LOOKUP_TABLE_PROB_STEP_PERCENT: float = 1.0     # step, in percent, of the regular interior grid
+LOOKUP_TABLE_MIN_ROWS: int = 2                  # minimum rows required to produce a usable table
+
+LOOKUP_TABLE_FLAG_DTYPE = np.int16
+LOOKUP_TABLE_FLAG_ALL_MISSING_VALUE: np.int16 = np.int16(-999)
+
+# Distinct failure sub-codes (all map to the same overall "missing" scalar
+# flag value -999 above; these finer-grained codes are logged only, not
+# written as a separate NetCDF variable, to avoid inventing a new flag
+# variable beyond what was requested).
+LOOKUP_TABLE_FAIL_REASON_EMPIRICAL_WSE_UNAVAILABLE: str = "empirical_wse_table_unavailable"
+LOOKUP_TABLE_FAIL_REASON_SOS_FDC_UNAVAILABLE: str = "sos_fdc_table_unavailable"
+LOOKUP_TABLE_FAIL_REASON_EMPTY_PROBABILITY_OVERLAP: str = "empty_probability_overlap"
+LOOKUP_TABLE_FAIL_REASON_TOO_FEW_ROWS: str = "too_few_overlap_rows"
+LOOKUP_TABLE_FAIL_REASON_INTERPOLATION_FAILED: str = "interpolation_failed"
+LOOKUP_TABLE_FAIL_REASON_UNEXPECTED_ERROR: str = "unexpected_error"
+
+LOOKUP_TABLE_FLAG_DEFINITION: dict[int, str] = {
+     0:    "same_length: lookup_table_N == n_empirical_obs",
+     1:    "downsampled_10pct: lookup_N > empirical by 0-10%",
+     2:    "downsampled_25pct: lookup_N > empirical by 10-25%",
+     3:    "downsampled_50pct: lookup_N > empirical by 25-50%",
+     4:    "downsampled_75pct: lookup_N > empirical by 50-75%",
+     5:    "downsampled_extreme: lookup_N > empirical by >75%",
+    -1:    "upsampled_10pct: lookup_N < empirical by 0-10%",
+    -2:    "upsampled_25pct: lookup_N < empirical by 10-25%",
+    -3:    "upsampled_50pct: lookup_N < empirical by 25-50%",
+    -4:    "upsampled_75pct: lookup_N < empirical by 50-75%",
+    -5:    "upsampled_extreme: lookup_N < empirical by >75%",
+    -999:  "all_missing: lookup table could not be produced",
+}
+
+# NetCDF variable / group / dimension names (mirrors SWOT_QQ_DELIVERABLE_* naming style)
+SWOT_QQ_LOOKUP_TABLE_PROB_NAME: str = "QQ_lookup_table_prob"
+SWOT_QQ_LOOKUP_TABLE_WSE_NAME: str = "QQ_lookup_table_wse"
+SWOT_QQ_LOOKUP_TABLE_Q_NAME: str = "QQ_lookup_table_q"
+SWOT_QQ_LOOKUP_TABLE_FLAG_NAME: str = "QQ_lookup_table_flag"
+
+OUTPUT_NC_LOOKUP_TABLE_GP_NAME: str = "lookup_table"
+OUTPUT_NC_ROOT_DIM_NLOOKUP_NAME: str = "nlookup"
+
+
+
+
+
+
+
 PRODUCE_WSE_QUANTILE_IF_INVALID_REACH: bool = True
 PRODUCE_WSE_QUANTILE_IF_NO_Q_ESTIMATED: bool = True
 PRODUCE_WSE_QUANTILE_IF_CLEAN_FILT_WSE_BELOW_THRESHOLD: bool = False

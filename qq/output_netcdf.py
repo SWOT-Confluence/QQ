@@ -36,6 +36,11 @@ Group "q"
 Group "wse_quantile"
     Variables:   QQ_wse_quant_prob(nwseq), QQ_wse_quant_wse(nwseq),
                  QQ_wse_quant_flag (scalar)
+
+Group "lookup_table"
+    Variables:   QQ_lookup_table_prob(nlookup), QQ_lookup_table_wse(nlookup),
+                 QQ_lookup_table_q(nlookup), QQ_lookup_table_flag (scalar)
+
 """
 
 from __future__ import annotations
@@ -378,6 +383,57 @@ def write_nc(config: QQConfig, state: QQState) -> None:
             flag_var.missing_value   = C.WSE_QUANT_FLAG_ALL_MISSING_VALUE
             flag_var.flag_definition = json.dumps(C.WSE_QUANT_FLAG_DEFINITION)
             flag_var.assignValue(state.QQ_wse_quant_flag_out)
+            
+            
+            # ----------------------------------------------------------------
+            # GROUP "lookup_table"  —  WSE-Q lookup table (auxiliary deliverable)
+            # ----------------------------------------------------------------
+            qq_nc.createDimension(
+                C.OUTPUT_NC_ROOT_DIM_NLOOKUP_NAME, len(state.QQ_lookup_table_prob_out)
+            )
+
+            lut_gp          = qq_nc.createGroup(C.OUTPUT_NC_LOOKUP_TABLE_GP_NAME)
+            lut_gp.long_name = "QQ WSE-discharge lookup table (probability overlap only, no extrapolation)"
+
+            lut_prob_var = lut_gp.createVariable(
+                C.SWOT_QQ_LOOKUP_TABLE_PROB_NAME, "f8",
+                (C.OUTPUT_NC_ROOT_DIM_NLOOKUP_NAME,),
+                fill_value=C.QQ_NC_DOUBLE_FILL_VALUE,
+            )
+            lut_prob_var.long_name     = "lookup_table_non_exceedance_probability"
+            lut_prob_var.units         = "1"
+            lut_prob_var.missing_value = C.QQ_NC_DOUBLE_FILL_VALUE
+            lut_prob_var[:]            = state.QQ_lookup_table_prob_out
+
+            lut_wse_var = lut_gp.createVariable(
+                C.SWOT_QQ_LOOKUP_TABLE_WSE_NAME, "f8",
+                (C.OUTPUT_NC_ROOT_DIM_NLOOKUP_NAME,),
+                fill_value=C.QQ_NC_DOUBLE_FILL_VALUE,
+            )
+            lut_wse_var.long_name     = "lookup_table_WSE"
+            lut_wse_var.units         = "m"
+            lut_wse_var.missing_value = C.QQ_NC_DOUBLE_FILL_VALUE
+            lut_wse_var[:]            = state.QQ_lookup_table_wse_out
+
+            lut_q_var = lut_gp.createVariable(
+                C.SWOT_QQ_LOOKUP_TABLE_Q_NAME, "f8",
+                (C.OUTPUT_NC_ROOT_DIM_NLOOKUP_NAME,),
+                fill_value=C.QQ_NC_DOUBLE_FILL_VALUE,
+            )
+            lut_q_var.long_name     = "lookup_table_discharge"
+            lut_q_var.units         = "m^3/s"
+            lut_q_var.missing_value = C.QQ_NC_DOUBLE_FILL_VALUE
+            lut_q_var[:]            = state.QQ_lookup_table_q_out
+
+            lut_flag_var = lut_gp.createVariable(
+                C.SWOT_QQ_LOOKUP_TABLE_FLAG_NAME, "i2", (),
+                fill_value=C.LOOKUP_TABLE_FLAG_ALL_MISSING_VALUE,
+            )
+            lut_flag_var.long_name       = "lookup_table_resampling_flag"
+            lut_flag_var.units           = "1"
+            lut_flag_var.missing_value   = C.LOOKUP_TABLE_FLAG_ALL_MISSING_VALUE
+            lut_flag_var.flag_definition = json.dumps(C.LOOKUP_TABLE_FLAG_DEFINITION)
+            lut_flag_var.assignValue(state.QQ_lookup_table_flag_out)
 
     except Exception as exc:
         fail(config, state, f"Output NetCDF write failed: {exc}", detailed_code=-702)

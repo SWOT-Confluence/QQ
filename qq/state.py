@@ -89,6 +89,21 @@ class QQState:
     # ------------------------------------------------------------------
     sos_variable_nc_metadata: dict
     sos_fdc_table: pd.DataFrame
+    
+    
+    
+    # ------------------------------------------------------------------
+    # WSE-Q lookup table (auxiliary deliverable; populated by lookup_table.py)
+    # ------------------------------------------------------------------
+    QQ_lookup_table_prob: np.ndarray
+    QQ_lookup_table_wse: np.ndarray
+    QQ_lookup_table_q: np.ndarray
+    QQ_lookup_table_flag: np.int16
+    QQ_lookup_table_fail_reason: str
+
+
+
+
 
     # ------------------------------------------------------------------
     # Quantile matching results
@@ -113,6 +128,13 @@ class QQState:
     output_nc_root_time_var_units: str
     output_nc_root_time_var_fill_value: object
     output_nc_root_time_var_missing_value: object
+    
+    
+    QQ_lookup_table_prob_out: np.ndarray
+    QQ_lookup_table_wse_out: np.ndarray
+    QQ_lookup_table_q_out: np.ndarray
+    QQ_lookup_table_flag_out: np.int16
+    
 
     # ------------------------------------------------------------------
     # Output file paths (populated by output_netcdf.output_paths)

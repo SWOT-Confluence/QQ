@@ -63,7 +63,17 @@ def prepare_output_arrays(config: QQConfig, state: QQState) -> None:  # noqa: PL
 
         if not hasattr(state, "QQ_wse_quant_flag") or state.QQ_wse_quant_flag is None:
             state.QQ_wse_quant_flag = C.WSE_QUANT_FLAG_DTYPE(C.WSE_QUANT_FLAG_ALL_MISSING_VALUE)
-
+        
+        if not hasattr(state, "QQ_lookup_table_prob") or state.QQ_lookup_table_prob is None:
+            state.QQ_lookup_table_prob = np.array([], dtype=np.float64)
+        if not hasattr(state, "QQ_lookup_table_wse") or state.QQ_lookup_table_wse is None:
+            state.QQ_lookup_table_wse = np.array([], dtype=np.float64)
+        if not hasattr(state, "QQ_lookup_table_q") or state.QQ_lookup_table_q is None:
+            state.QQ_lookup_table_q = np.array([], dtype=np.float64)
+        if not hasattr(state, "QQ_lookup_table_flag") or state.QQ_lookup_table_flag is None:
+            state.QQ_lookup_table_flag = C.LOOKUP_TABLE_FLAG_DTYPE(C.LOOKUP_TABLE_FLAG_ALL_MISSING_VALUE)
+            
+            
         if not hasattr(state, "sos_fdc_table") or state.sos_fdc_table is None:
             from qq.helpers import make_empty_sos_fdc_table
             state.sos_fdc_table = make_empty_sos_fdc_table()
@@ -115,6 +125,12 @@ def prepare_output_arrays(config: QQConfig, state: QQState) -> None:  # noqa: PL
         )
 
         state.QQ_wse_quant_flag_out = C.WSE_QUANT_FLAG_DTYPE(state.QQ_wse_quant_flag)
+        
+        # Lookup table arrays pass through unchanged (already fill-safe from lookup_table.py)
+        state.QQ_lookup_table_prob_out = np.asarray(state.QQ_lookup_table_prob, dtype=np.float64)
+        state.QQ_lookup_table_wse_out  = np.asarray(state.QQ_lookup_table_wse,  dtype=np.float64)
+        state.QQ_lookup_table_q_out    = np.asarray(state.QQ_lookup_table_q,    dtype=np.float64)
+        state.QQ_lookup_table_flag_out = C.LOOKUP_TABLE_FLAG_DTYPE(state.QQ_lookup_table_flag)
 
         # ------------------------------------------------------------------
         # 3-1-3  Select base time dimension for q/time output
@@ -343,12 +359,23 @@ def prepare_output_arrays(config: QQConfig, state: QQState) -> None:  # noqa: PL
 #     state.QQ_wse_quant_prob_out = np.linspace(1 / n, 1, n).astype(np.float64)
 #     state.QQ_wse_quant_wse_out  = np.full(n, C.QQ_NC_DOUBLE_FILL_VALUE, dtype=np.float64)
 
+# def _set_fail_safe_arrays(state: QQState) -> None:
+#     """Set all output arrays to safe fill-value defaults after a -601 failure."""
+    # _grid = C.DELIVERABLE_WSE_PROBABILITY_GRID
+    # state.QQ_wse_quant_prob_out = _grid.astype(np.float64)
+    # state.QQ_wse_quant_wse_out  = np.full(len(_grid), C.QQ_NC_DOUBLE_FILL_VALUE, dtype=np.float64)
+    # state.QQ_wse_quant_flag_out = C.WSE_QUANT_FLAG_DTYPE(C.WSE_QUANT_FLAG_ALL_MISSING_VALUE)
+    
 def _set_fail_safe_arrays(state: QQState) -> None:
     """Set all output arrays to safe fill-value defaults after a -601 failure."""
     _grid = C.DELIVERABLE_WSE_PROBABILITY_GRID
     state.QQ_wse_quant_prob_out = _grid.astype(np.float64)
     state.QQ_wse_quant_wse_out  = np.full(len(_grid), C.QQ_NC_DOUBLE_FILL_VALUE, dtype=np.float64)
     state.QQ_wse_quant_flag_out = C.WSE_QUANT_FLAG_DTYPE(C.WSE_QUANT_FLAG_ALL_MISSING_VALUE)
+    state.QQ_lookup_table_prob_out  = np.array([], dtype=np.float64)
+    state.QQ_lookup_table_wse_out   = np.array([], dtype=np.float64)
+    state.QQ_lookup_table_q_out     = np.array([], dtype=np.float64)
+    state.QQ_lookup_table_flag_out  = C.LOOKUP_TABLE_FLAG_DTYPE(C.LOOKUP_TABLE_FLAG_ALL_MISSING_VALUE)
     state.QQ_time_out          = np.array([C.QQ_NC_DOUBLE_FILL_VALUE], dtype=np.float64)
     state.QQ_q_out             = np.array([C.QQ_NC_DOUBLE_FILL_VALUE], dtype=np.float64)
     state.QQ_q_status_flag_out = np.array([C.QQ_Q_STATUS_INVALID_REACH_CODE], dtype=np.int16)

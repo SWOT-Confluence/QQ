@@ -28,6 +28,7 @@ Pipeline execution order
  8. deliverable_wse_quantile   (wse_quantile.py)
  9. deliverable_wse_flag       (wse_quantile.py)
 10. read_sos                   (input_sos.py)
+10.5. build_lookup_table       (lookup_table.py)
 11. quantile_matching          (quantile_matching.py)
 12. prepare_output_arrays      (output_arrays.py)
 13. prepare_plot_limits        (diagnostics.py)
@@ -45,6 +46,7 @@ from qq.input_json import read_json, setup_inputs_and_defaults
 from qq.input_sos import read_sos
 from qq.input_swot import clean_swot, control_wse_count, filter_swot, read_swot
 from qq.logger import log, section
+from qq.lookup_table import build_lookup_table
 from qq.output_arrays import prepare_output_arrays
 from qq.output_netcdf import output_paths, save_log, write_nc
 from qq.quantile_matching import quantile_matching
@@ -94,6 +96,11 @@ def run(config: QQConfig) -> QQState:
     # Step 10: SOS FDC extraction
     # ------------------------------------------------------------------
     read_sos(config, state)
+
+    # ------------------------------------------------------------------
+    # Step 10.5: WSE-Q lookup table (auxiliary deliverable, non-fatal)
+    # ------------------------------------------------------------------
+    build_lookup_table(config, state)
 
     # ------------------------------------------------------------------
     # Step 11: Core QQ quantile matching

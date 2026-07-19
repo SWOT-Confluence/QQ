@@ -174,10 +174,17 @@ Group "q"
 Group "wse_quantile"
   QQ_wse_quant_prob(nwseq)  f8  non-exceedance probabilities
   QQ_wse_quant_wse(nwseq)   f8  WSE at each quantile level [m]
-  QQ_wse_quant_flag         i2  resampling quality flag (scalar)
+  QQ_wse_quant_flag         i2  scalar resampling quality flag
+
+Group "lookup_table"
+  QQ_lookup_table_prob(nlookup)  f8  probabilities within [max(emp_min, fdc_min), min(emp_max, fdc_max)]
+  QQ_lookup_table_wse(nlookup)   f8  WSE at each lookup probability (interpolated, no extrapolation)
+  QQ_lookup_table_q(nlookup)     f8  discharge at each lookup probability (interpolated, no extrapolation)
+  QQ_lookup_table_flag           i2  scalar resampling flag (same sign convention as QQ_wse_quant_flag)
 ```
 
 Fill / missing values: `f8` → `-999999999999.0`, `i2` flags → `-999`, `i4` scalars → `-999999999`.
+(The WSE-Q lookup table reuses these same values — no new fill-value convention was introduced.)
 
 Full schema in [`docs/architecture.md`](docs/architecture.md).
 

@@ -217,6 +217,103 @@ class TestPipelineSuccess:
                 f"Fill value {fv} does not match expected {C.QQ_NC_DOUBLE_FILL_VALUE}"
 
 
+
+
+
+
+
+
+class TestLookupTable:
+    """WSE-Q lookup table: auxiliary deliverable, probability-overlap logic."""
+
+    @pytest.fixture(scope="class")
+    def state(self, qq_config):
+        from qq.pipeline import run
+        return run(qq_config)
+
+    def test_lookup_table_produced_for_valid_reach(self, state):
+        assert len(state.QQ_lookup_table_prob_out) > 0
+
+    def test_lookup_prob_wse_q_same_length(self, state):
+        assert len(state.QQ_lookup_table_prob_out) == len(state.QQ_lookup_table_wse_out)
+        assert len(state.QQ_lookup_table_prob_out) == len(state.QQ_lookup_table_q_out)
+
+    def test_lookup_prob_monotone_increasing(self, state):
+        p = state.QQ_lookup_table_prob_out
+        assert np.all(np.diff(p) > 0)
+
+    def test_lookup_prob_within_overlap_bounds(self, state):
+        emp = state.swot_clean_filt_empirical_wse_quantile_table
+        fdc = state.sos_fdc_table
+        expected_min = max(emp["empirical_p_non_exceedance"].min(), fdc["p_non_exceedance"].min())
+        expected_max = min(emp["empirical_p_non_exceedance"].max(), fdc["p_non_exceedance"].max())
+        p = state.QQ_lookup_table_prob_out
+        assert p[0] == pytest.approx(expected_min)
+        assert p[-1] == pytest.approx(expected_max)
+
+    def test_lookup_no_extrapolation_beyond_fdc(self, state):
+        fdc = state.sos_fdc_table
+        assert state.QQ_lookup_table_prob_out[-1] <= fdc["p_non_exceedance"].max() + 1e-9
+
+    def test_lookup_flag_matches_sign_convention(self, state):
+        n_lookup = len(state.QQ_lookup_table_prob_out)
+        n_emp = state.swot_clean_filt_wse_n_valid
+        flag = int(state.QQ_lookup_table_flag_out)
+        if n_lookup == n_emp:
+            assert flag == 0
+        elif n_lookup < n_emp:
+            assert flag > 0
+        else:
+            assert flag < 0
+
+    def test_nc_lookup_table_group_exists(self, state):
+        with open_nc(state) as nc:
+            assert C.OUTPUT_NC_LOOKUP_TABLE_GP_NAME in nc.groups
+
+    def test_nc_lookup_table_variables_exist(self, state):
+        with open_nc(state) as nc:
+            grp = nc[C.OUTPUT_NC_LOOKUP_TABLE_GP_NAME]
+            assert C.SWOT_QQ_LOOKUP_TABLE_PROB_NAME in grp.variables
+            assert C.SWOT_QQ_LOOKUP_TABLE_WSE_NAME  in grp.variables
+            assert C.SWOT_QQ_LOOKUP_TABLE_Q_NAME    in grp.variables
+            assert C.SWOT_QQ_LOOKUP_TABLE_FLAG_NAME in grp.variables
+
+    def test_nlookup_dimension_matches_array_length(self, state):
+        with open_nc(state) as nc:
+            assert nc.dimensions[C.OUTPUT_NC_ROOT_DIM_NLOOKUP_NAME].size == len(state.QQ_lookup_table_prob_out)
+
+
+class TestLookupTableInvalidReach:
+    """Lookup table must degrade gracefully — never marks a reach invalid by itself."""
+
+    @pytest.fixture(scope="class")
+    def state(self, invalid_reach_env):
+        config, _ = invalid_reach_env
+        from qq.pipeline import run
+        return run(config)
+
+    def test_lookup_table_all_missing_when_swot_invalid(self, state):
+        assert len(state.QQ_lookup_table_prob_out) == 0
+
+    def test_lookup_flag_is_all_missing_code(self, state):
+        assert int(state.QQ_lookup_table_flag_out) == C.LOOKUP_TABLE_FLAG_ALL_MISSING_VALUE
+
+    def test_reach_invalidity_unaffected_by_lookup_table(self, state):
+        # The reach is invalid because of the pre-existing -321 gate, NOT
+        # because the lookup table failed — confirm the code is unchanged.
+        assert state.invalid_reach_detailed_code == -321
+
+
+
+
+
+
+
+
+
+
+
+
 # ---------------------------------------------------------------------------
 # Invalid-reach path: too few observations (5 < 50 threshold)
 # ---------------------------------------------------------------------------
