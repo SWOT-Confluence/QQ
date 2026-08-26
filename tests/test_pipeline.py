@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 from netCDF4 import Dataset
 
+from qq import metadata as M
 from qq import constants as C
 from qq.config import QQConfig
 from tests.conftest import N_OBS, REACH_ID
@@ -63,8 +64,8 @@ class TestPipelineSuccess:
 
     def test_q_status_flag_same_length_as_q(self, state):
         assert len(state.QQ_q_status_flag_out) == len(state.QQ_q_out)
-        
-        
+
+
     def test_quantile_matching_uses_only_fdc_range(self, state):
         """With predefined extremes disabled, every valid Q must have p within FDC range."""
         import pandas as pd
@@ -91,16 +92,16 @@ class TestPipelineSuccess:
 
     # def test_wse_quant_wse_length_is_100(self, state):
     #     assert len(state.QQ_wse_quant_wse_out) == C.DELIVERABLE_WSE_QUANTILE_TABLE_N
-    
-    
+
+
 
     def test_wse_quant_prob_length_matches_grid(self, state):
         assert len(state.QQ_wse_quant_prob_out) == len(C.DELIVERABLE_WSE_PROBABILITY_GRID)
 
     def test_wse_quant_wse_length_matches_grid(self, state):
         assert len(state.QQ_wse_quant_wse_out) == len(C.DELIVERABLE_WSE_PROBABILITY_GRID)
-        
-        
+
+
 
 
 
@@ -148,6 +149,60 @@ class TestPipelineSuccess:
         with open_nc(state) as nc:
             assert nc.Conventions == C.OUTPUT_NC_ROOT_CONVENTIONS
 
+    def test_nc_software_name(self, state):
+        with open_nc(state) as nc:
+            assert nc.software_name == M.PROJECT_NAME
+
+
+    def test_nc_software_version(self, state):
+        with open_nc(state) as nc:
+            assert nc.software_version == M.PROJECT_VERSION
+
+
+    def test_nc_git_commit_exists(self, state):
+        with open_nc(state) as nc:
+            assert isinstance(nc.software_git_commit, str)
+            assert len(nc.software_git_commit) > 0
+
+
+    def test_nc_git_describe_exists(self, state):
+        with open_nc(state) as nc:
+            assert isinstance(nc.software_git_describe, str)
+            assert len(nc.software_git_describe) > 0
+
+
+    def test_nc_date_created_exists(self, state):
+        with open_nc(state) as nc:
+            assert isinstance(nc.date_created, str)
+            assert nc.date_created.endswith("Z")
+
+
+    def test_nc_repository(self, state):
+        with open_nc(state) as nc:
+            assert nc.software_repository == M.REPOSITORY_URL
+
+
+    def test_package_version_single_source(self):
+        import qq
+        assert qq.__version__ == M.PROJECT_VERSION
+
+    def test_nc_institution(self, state):
+        with open_nc(state) as nc:
+            assert nc.institution == M.PROJECT_OWNER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def test_nc_root_dimensions(self, state):
         with open_nc(state) as nc:
             assert C.OUTPUT_NC_ROOT_DIM_NT_NAME    in nc.dimensions
@@ -161,7 +216,7 @@ class TestPipelineSuccess:
     def test_nc_nwseq_dimension_matches_grid(self, state):
         with open_nc(state) as nc:
             assert nc.dimensions[C.OUTPUT_NC_ROOT_DIM_NWSEQ_NAME].size == len(C.DELIVERABLE_WSE_PROBABILITY_GRID)
-            
+
 
 
     def test_nc_time_variable_exists(self, state):

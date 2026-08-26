@@ -16,8 +16,6 @@ A reach-based Discharge Estimation algorithm for the [SWOT-Confluence](https://g
 - [Repository Structure](#repository-structure)
 - [Configuration](#configuration)
 - [Testing](#testing)
-- [Deployment](#deployment)
-- [SWOT-Confluence Integration](#swot-confluence-integration)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
@@ -31,20 +29,21 @@ QQ (Quantile-Quantile) matching is a statistical, prior-based discharge estimati
 
 1. Ranks clean, quality-filtered SWOT WSE observations to build an **empirical non-exceedance probability curve**.
 2. Resamples that curve onto a standardized **deliverable probability grid** for NetCDF output.
-3. Maps each observation's probability to a discharge value using the **SOS Flow Duration Curve** at the same probability level.
+3. Maps each observation's probability to a discharge value using the **SOS Flow Duration Curve** at the same probability level, and creates a semi-rating-curve.
 4. Writes a per-reach NetCDF discharge time series, always — including a fill-value file for reaches that fail quality gates.
 
 Unlike hydraulic FLPE algorithms, QQ requires no channel geometry, no Manning's roughness coefficient, and no rating-curve calibration. It depends only on the assumption that WSE rank approximates discharge rank over the observation period, and that the SOS FDC is representative of that period.
 
-<!-- See [`docs/methodology.md`](docs/methodology.md) for the full scientific description. -->
+See [`documentations/METHODOLOGY_v1.0.0.md`](documentations/METHODOLOGY_v1.0.0.md) for the full scientific description of the initial release (version 1.0.0). The changes records are registered in [`documentations/CHANGELOG.md`](documentations/CHANGELOG.md). the versioning naming convention definition is found in [`documentations/VERSIONING.md`](documentations/VERSIONING.md)
 
 ---
 
 ## Requirements
 
-- Python **3.11+**
+- Python **>= 3.10**
 - `netCDF4`, `numpy`, `pandas` (see [`requirements.txt`](requirements.txt))
 - Git
+- Production Docker/CI currently use Python **3.11**
 
 ---
 
@@ -73,7 +72,7 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 5. Editable install (optional, for development)
+### 5. Install QQ
 ```bash
 python -m pip install -e .
 ```
@@ -135,7 +134,7 @@ pytest tests/ -v
 ├── swot/
 │   └── <reach_id>_SWOT.nc
 └── sos/
-    └── <continent>_SOS.nc
+    └── <continent>_sword_v17c_SOS_priors.nc
 ```
 
 **`reaches.json`** — one entry per reach:
@@ -145,7 +144,7 @@ pytest tests/ -v
     "reach_id": "21101200141",
     "swot":  "21101200141_SWOT.nc",
     "sos":   "eu_sword_v17c_SOS_priors.nc",
-    "sword": "eu_sword_v17b.nc"
+    "sword": "eu_sword_v17c.nc"
   }
 ]
 ```
@@ -186,7 +185,7 @@ Group "lookup_table"
 Fill / missing values: `f8` → `-999999999999.0`, `i2` flags → `-999`, `i4` scalars → `-999999999`.
 (The WSE-Q lookup table reuses these same values — no new fill-value convention was introduced.)
 
-Full schema in [`docs/architecture.md`](docs/architecture.md).
+Full schema in [`documentations/ARCHITECTURE.md`](documentations/ARCHITECTURE.md).
 
 ---
 
@@ -202,7 +201,7 @@ Options:
   -i, --index INT       0-based reach index (default: 0)
                         Overridden by $AWS_BATCH_JOB_ARRAY_INDEX
   --input_dir DIR       Root input directory (default: /mnt/data/input)
-  --output_dir DIR      Output directory (default: /mnt/data/output)
+  --output_dir DIR      Output directory (default: /mnt/data/flpe/qq)
   --mode {RUN,DEBUG,AUDIT}
                         RUN   = production; errors non-fatal, fill-value NC written
                         DEBUG = raises immediately on error
@@ -229,15 +228,16 @@ QQ/
 │   ├── input_json.py             Manifest reading, path resolution
 │   ├── input_swot.py             SWOT read → clean → filter → gate
 │   ├── input_sos.py              SOS FDC extraction
+│   ├── metadata.py
+│   ├── lookup_table.py
 │   ├── wse_quantile.py           Empirical + deliverable WSE quantile
 │   ├── quantile_matching.py      Core WSE → probability → discharge
 │   ├── output_arrays.py          Final output array preparation
 │   ├── output_netcdf.py          NetCDF writer + log saver
 │   ├── diagnostics.py            Optional Plotly plots
 │   └── pipeline.py               Orchestrator
-├── tests/                       60 automated tests
-├── docs/                        Full documentation suite
-├── confluence/templates/modules/qq.sh.j2   run-confluence-locally SLURM template
+├── tests/                        Automated test suite
+├── documentations/            Full documentation suite
 ├── deploy/deploy.sh              5-argument deploy script
 ├── terraform/                    AWS Batch + ECR infrastructure
 ├── .github/workflows/            CI (test.yml) + CD (release.yml)
@@ -267,6 +267,8 @@ Runtime settings (paths, index, mode) are resolved separately in `qq/config.py` 
 
 ## Testing
 
+Run the full automated test suite with:
+
 ```bash
 pytest tests/ -v
 ```
@@ -277,10 +279,36 @@ pytest tests/ -v
 | `test_helpers.py` | Interpolation utilities |
 | `test_pipeline.py` | End-to-end pipeline, valid + invalid reach, CLI exit codes |
 
-60 tests total, all passing on Python 3.11+.
+---
+
+## Documentation
+
+Detailed QQ Project documentation is available in:
+
+- [`documentations/METHODOLOGY_v1.0.0.md`](documentations/METHODOLOGY_v1.0.0.md)
+- [`documentations/ARCHITECTURE.md`](documentations/ARCHITECTURE.md)
+- [`documentations/VERSIONING.md`](documentations/VERSIONING.md)
+- [`documentations/CHANGELOG.md`](documentations/CHANGELOG.md)
+
 
 ---
 
+## Contributing
+
+Changes should normally be developed on a dedicated branch, tested with the
+full automated test suite, and merged into `main` after review.
+
+---
+
+## Maintainers
+
+Canonical project authorship and maintainer information and repository metadata are declared in
+[`pyproject.toml`](pyproject.toml).
+
+Repository ownership and access are managed through the
+[SWOT-Confluence GitHub organization](https://github.com/SWOT-Confluence).
+
+---
 
 ## License
 

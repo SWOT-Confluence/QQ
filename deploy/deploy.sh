@@ -35,11 +35,27 @@ echo "  S3_BUCKET  : ${S3_BUCKET}"
 echo "  PROFILE    : ${PROFILE}"
 echo ""
 
+
+GIT_COMMIT="$(
+  git -C "${REPO_ROOT}" rev-parse HEAD 2>/dev/null || echo unknown
+)"
+
+GIT_DESCRIBE="$(
+  git -C "${REPO_ROOT}" describe --tags --always --dirty 2>/dev/null || echo unknown
+)"
+
+
 # -----------------------------------------------------------------------
 # 1. Build Docker image
 # -----------------------------------------------------------------------
 echo "[1/4] Building Docker image..."
-docker build -t "${REGISTRY}/${REPOSITORY}:latest" "${REPO_ROOT}"
+# docker build -t "${REGISTRY}/${REPOSITORY}:latest" "${REPO_ROOT}"
+
+docker build \
+  --build-arg GIT_COMMIT="${GIT_COMMIT}" \
+  --build-arg GIT_DESCRIBE="${GIT_DESCRIBE}" \
+  -t "${REGISTRY}/${REPOSITORY}:latest" \
+  "${REPO_ROOT}"
 
 # -----------------------------------------------------------------------
 # 2. Authenticate to ECR and push

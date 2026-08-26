@@ -1,7 +1,7 @@
 """
 qq/constants.py
 ===============
-All algorithm-level constants for the SWOT-QQ FLPE algorithm.
+All algorithm-level constants for the SWOT-QQ Discharge Estimation algorithm.
 
 These constants are extracted directly from build_config() in the prototype notebook
 and must not be changed without scientific review. They are intentionally verbose and
@@ -209,16 +209,16 @@ WSE_QUANT_FLAG_ALL_MISSING_VALUE: np.int16 = np.int16(-999)
 
 WSE_QUANT_FLAG_DEFINITION: dict[int, str] = {
      0:    "same_length: standard_table_N == n_empirical_obs",
-     1:    "downsampled_10pct: standard_N > empirical by 0-10%",
-     2:    "downsampled_25pct: standard_N > empirical by 10-25%",
-     3:    "downsampled_50pct: standard_N > empirical by 25-50%",
-     4:    "downsampled_75pct: standard_N > empirical by 50-75%",
-     5:    "downsampled_extreme: standard_N > empirical by >75%",
-    -1:    "upsampled_10pct: standard_N < empirical by 0-10%",
-    -2:    "upsampled_25pct: standard_N < empirical by 10-25%",
-    -3:    "upsampled_50pct: standard_N < empirical by 25-50%",
-    -4:    "upsampled_75pct: standard_N < empirical by 50-75%",
-    -5:    "upsampled_extreme: standard_N < empirical by >75%",
+     1:    "downsampled_10pct: standard_N < empirical by 0-10%",
+     2:    "downsampled_25pct: standard_N < empirical by 10-25%",
+     3:    "downsampled_50pct: standard_N < empirical by 25-50%",
+     4:    "downsampled_75pct: standard_N < empirical by 50-75%",
+     5:    "downsampled_extreme: standard_N < empirical by >75%",
+    -1:    "upsampled_10pct: standard_N > empirical by 0-10%",
+    -2:    "upsampled_25pct: standard_N > empirical by 10-25%",
+    -3:    "upsampled_50pct: standard_N > empirical by 25-50%",
+    -4:    "upsampled_75pct: standard_N > empirical by 50-75%",
+    -5:    "upsampled_extreme: standard_N > empirical by >75%",
     -999:  "all_missing: WSE quantile table could not be produced",
 }
 
@@ -252,16 +252,16 @@ LOOKUP_TABLE_FAIL_REASON_UNEXPECTED_ERROR: str = "unexpected_error"
 
 LOOKUP_TABLE_FLAG_DEFINITION: dict[int, str] = {
      0:    "same_length: lookup_table_N == n_empirical_obs",
-     1:    "downsampled_10pct: lookup_N > empirical by 0-10%",
-     2:    "downsampled_25pct: lookup_N > empirical by 10-25%",
-     3:    "downsampled_50pct: lookup_N > empirical by 25-50%",
-     4:    "downsampled_75pct: lookup_N > empirical by 50-75%",
-     5:    "downsampled_extreme: lookup_N > empirical by >75%",
-    -1:    "upsampled_10pct: lookup_N < empirical by 0-10%",
-    -2:    "upsampled_25pct: lookup_N < empirical by 10-25%",
-    -3:    "upsampled_50pct: lookup_N < empirical by 25-50%",
-    -4:    "upsampled_75pct: lookup_N < empirical by 50-75%",
-    -5:    "upsampled_extreme: lookup_N < empirical by >75%",
+     1:    "downsampled_10pct: lookup_N < empirical by 0-10%",
+     2:    "downsampled_25pct: lookup_N < empirical by 10-25%",
+     3:    "downsampled_50pct: lookup_N < empirical by 25-50%",
+     4:    "downsampled_75pct: lookup_N < empirical by 50-75%",
+     5:    "downsampled_extreme: lookup_N < empirical by >75%",
+    -1:    "upsampled_10pct: lookup_N > empirical by 0-10%",
+    -2:    "upsampled_25pct: lookup_N > empirical by 10-25%",
+    -3:    "upsampled_50pct: lookup_N > empirical by 25-50%",
+    -4:    "upsampled_75pct: lookup_N > empirical by 50-75%",
+    -5:    "upsampled_extreme: lookup_N > empirical by >75%",
     -999:  "all_missing: lookup table could not be produced",
 }
 
@@ -449,8 +449,6 @@ QQ_Q_STATUS_FLAG_DEFINITION: dict[int, str] = {
 # NetCDF root-level metadata
 # ---------------------------------------------------------------------------
 
-OUTPUT_NC_ROOT_TITLE: str = "QQ discharge output"
-OUTPUT_NC_ROOT_INSTITUTION: str = "SWOT-Confluence"
 OUTPUT_NC_ROOT_CONVENTIONS: str = "CF-1.8"
 
 OUTPUT_NC_ROOT_DIM_NT_NAME: str = "nt"

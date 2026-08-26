@@ -13,6 +13,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify release tag matches package version
+        shell: bash
+        run: |
+          PACKAGE_VERSION=$(python - <<'PY'
+          import pathlib
+          import tomllib
+
+          data = tomllib.loads(
+              pathlib.Path("pyproject.toml").read_text(encoding="utf-8")
+          )
+
+          print(data["project"]["version"])
+          PY
+          )
+
+          if [ "v${PACKAGE_VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "ERROR: tag ${GITHUB_REF_NAME} does not match pyproject version v${PACKAGE_VERSION}"
+            exit 1
+          fi
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -26,12 +51,17 @@ jobs:
 
       - name: Build and push Docker image
         env:
-          REGISTRY:   ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: swot-confluence-qq
-          IMAGE_TAG:  ${{ github.ref_name }}
+          REGISTRY:    ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY:  swot-confluence-qq
+          IMAGE_TAG:   ${{ github.ref_name }}
+          GIT_COMMIT:  ${{ github.sha }}
         run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker tag  $REGISTRY/$REPOSITORY:$IMAGE_TAG $REGISTRY/$REPOSITORY:latest
+          docker build \
+            --build-arg GIT_COMMIT=$GIT_COMMIT \
+            --build-arg GIT_DESCRIBE=$IMAGE_TAG \
+            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+
+          docker tag $REGISTRY/$REPOSITORY:$IMAGE_TAG $REGISTRY/$REPOSITORY:latest
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
           docker push $REGISTRY/$REPOSITORY:latest
 

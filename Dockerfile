@@ -18,8 +18,6 @@
 
 FROM python:3.11-slim AS base
 
-LABEL maintainer="SWOT-Confluence"
-LABEL description="QQ FLPE algorithm: quantile-quantile WSE-to-discharge mapping"
 
 WORKDIR /app
 
@@ -28,13 +26,39 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir -r requirements.txt
 
-# Copy the algorithm package and entry point
+# # Copy the algorithm package and entry point
+# COPY qq/ ./qq/
+# COPY run_qq.py ./
+
+
+# Copy package metadata and source
+COPY pyproject.toml ./
+COPY README.md ./
 COPY qq/ ./qq/
 COPY run_qq.py ./
+
+# Install QQ itself so Python package metadata is available at runtime.
+RUN pip install --no-cache-dir --no-deps .
+
+
+
 
 # Default production paths are baked into config.py as constants;
 # they can be overridden at runtime via --input_dir / --output_dir.
 ENV PYTHONUNBUFFERED=1
+
+
+# Git provenance is injected by the release workflow.
+ARG GIT_COMMIT=unknown
+ARG GIT_DESCRIBE=unknown
+
+ENV QQ_GIT_COMMIT=${GIT_COMMIT}
+ENV QQ_GIT_DESCRIBE=${GIT_DESCRIBE}
+
+LABEL org.opencontainers.image.revision=${GIT_COMMIT}
+LABEL org.opencontainers.image.version=${GIT_DESCRIBE}
+
+
 
 ENTRYPOINT ["python", "run_qq.py"]
 CMD ["--help"]

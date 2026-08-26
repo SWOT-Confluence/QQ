@@ -2,7 +2,7 @@
 """
 run_qq.py
 =========
-SWOT-Confluence FLPE algorithm: QQ discharge estimation.
+SWOT-Confluence Discharge Estimation algorithm: QQ discharge estimation.
 CLI entry point — compatible with run-confluence-locally and AWS Batch.
 
 Production invocation (inside container):
@@ -36,12 +36,13 @@ Exit codes
 import argparse
 import sys
 from pathlib import Path
+from qq.metadata import PROJECT_DESCRIPTION
 
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="run_qq.py",
-        description="SWOT-Confluence QQ FLPE algorithm — per-reach discharge estimation.",
+        description=PROJECT_DESCRIPTION,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
