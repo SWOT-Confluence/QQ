@@ -16,7 +16,8 @@
 #     -v /path/to/mnt/flpe/qq:/mnt/data/flpe/qq \
 #     qq:latest /mnt/data/input/reaches.json --index 0
 
-FROM python:3.11-slim AS base
+# FROM python:3.11-slim AS base
+FROM python:3.11-slim
 
 
 WORKDIR /app
@@ -25,10 +26,6 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir -r requirements.txt
-
-# # Copy the algorithm package and entry point
-# COPY qq/ ./qq/
-# COPY run_qq.py ./
 
 
 # Copy package metadata and source
@@ -54,6 +51,9 @@ ARG GIT_DESCRIBE=unknown
 
 ENV QQ_GIT_COMMIT=${GIT_COMMIT}
 ENV QQ_GIT_DESCRIBE=${GIT_DESCRIBE}
+
+LABEL maintainer="SWOT-Confluence"
+LABEL description="SWOT-Confluence QQ discharge estimation algorithm: reach-based quantile-quantile mapping"
 
 LABEL org.opencontainers.image.revision=${GIT_COMMIT}
 LABEL org.opencontainers.image.version=${GIT_DESCRIBE}

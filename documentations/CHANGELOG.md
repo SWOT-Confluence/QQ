@@ -80,6 +80,10 @@ This file records user-visible and scientifically relevant changes between QQ ve
 - No quantile-matching change.
 - No FDC-processing change.
 - No change to the scientific NetCDF variables, dimensions, groups, flags, or fill values.
+- Corrected text descriptions of the WSE-quantile resampling flag and the WSE-Q
+  lookup-table resampling flag in `qq/constants.py`; the downsampled/upsampled
+  direction labels were textually inverted in v1.0.0. No numeric flag value,
+  algorithm behavior, or output array changed.
 
 **Compatibility**
 

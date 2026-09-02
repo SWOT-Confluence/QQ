@@ -13,8 +13,7 @@ scientific algorithm remains the v1.0.0 method.
 
 ## 1. High-level architecture
 
-QQ is a **single-reach package**, written for SWOT-Confluence pipeline. v1.0.0 is written as QQ is as a FLPE Algorithm within the pipeline. One invocation selects one reach from `reaches.json`, reads its SWOT observations and SOS flow-duration-curve
-prior, performs quantile matching, and writes one QQ NetCDF product.
+QQ is a **single-reach package** written for the SWOT-Confluence pipeline. In v1.0.0, QQ operates as a FLPE Algorithm within the pipeline. One invocation selects one reach from `reaches.json`, reads its SWOT observations and SOS flow-duration-curve prior, performs quantile matching, and writes one QQ NetCDF product.
 
 ```mermaid
 flowchart LR

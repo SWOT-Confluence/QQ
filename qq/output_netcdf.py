@@ -102,15 +102,14 @@ def output_paths(config: QQConfig, state: QQState) -> None:
         # Write directly into output_dir — no extra qq/ subfolder.
         #
         # Production mount convention (run-confluence-locally j2 template):
-        #   --bind mnt_dir/flpe/qq:/mnt/data/output  (or --bind .../flpe/qq:/mnt/data/flpe/qq)
-        #   --output_dir /mnt/data/output             (or /mnt/data/flpe/qq)
+        #   --bind mnt_dir/flpe/qq:/mnt/data/flpe/qq
+        #   --output_dir /mnt/data/flpe/qq
         #
         # Files land at:
         #   <output_dir>/<reach_id>_qq.nc
         #   <output_dir>/logs/<reach_id>_qq.log
-        #
-        # This avoids double-nesting (<output_dir>/qq/<reach_id>_qq.nc) that would
-        # result if the j2 template already binds the qq-specific directory.
+
+
         output_path = state.output_dir
         output_path.mkdir(parents=True, exist_ok=True)
 

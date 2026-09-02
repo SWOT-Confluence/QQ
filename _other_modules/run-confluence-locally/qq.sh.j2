@@ -1,0 +1,24 @@
+# To be implemented in Repository: "run-confluence-locally":
+# NEW FILE:
+# confluence/templates/modules/qq.sh.j2
+
+
+START_INDEX=$(( ${OFFSET:-0} + SLURM_ARRAY_TASK_ID * ${INDEX_RANGE:-1} ))
+END_INDEX=$(( START_INDEX + ${INDEX_RANGE:-1} - 1 ))
+
+if [[ -n "$MAX_LIMIT" ]]; then
+    (( END_INDEX >= MAX_LIMIT )) && END_INDEX=$(( MAX_LIMIT - 1 ))
+fi
+
+for (( idx=START_INDEX; idx<=END_INDEX; idx++ )); do
+  {{ container_cmd.run }} run \
+    {{ container_cmd.bind }} {{ mnt_dir }}/input:/mnt/data/input \
+    {{ container_cmd.bind }} {{ mnt_dir }}/flpe/qq:/mnt/data/flpe/qq \
+    {{ optional_binds | join(' \\\n    ') }} \
+    {{ sif_dir }}/qq.sif \
+    /mnt/data/input/reaches.json \
+    --input_dir /mnt/data/input \
+    --output_dir /mnt/data/flpe/qq \
+    --mode RUN \
+    -i ${idx}
+done

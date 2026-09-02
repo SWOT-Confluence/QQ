@@ -281,6 +281,29 @@ pytest tests/ -v
 
 ---
 
+## Deployment
+
+### Docker / AWS Batch
+
+```bash
+bash deploy/deploy.sh <registry> <repository> <prefix> <s3_state_bucket> <profile>
+```
+
+This builds the Docker image (injecting `GIT_COMMIT` and `GIT_DESCRIBE` as
+build-args for provenance), pushes it to ECR, and applies the Terraform
+configuration in `terraform/`. The Terraform state bucket and AWS credentials
+must be configured in advance. See `deploy/deploy.sh` and `terraform/` for
+full details.
+
+### HPC / run-confluence-locally
+
+QQ runs via
+[run-confluence-locally](https://github.com/SWOT-Confluence/run-confluence-locally).
+Add `qq` to `modules_to_run` in your configuration YAML. The Apptainer SIF
+image is built automatically from this repository's `Dockerfile`.
+
+---
+
 ## Documentation
 
 Detailed QQ Project documentation is available in:
