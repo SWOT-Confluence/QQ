@@ -3,19 +3,58 @@
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name = "swot-confluence-qq"
-version = "1.0.0"
-description = "SWOT-Confluence QQ FLPE algorithm: quantile-quantile discharge estimation"
+version = "1.0.1"
+description = "SWOT-Confluence QQ discharge estimation algorithm: reach-based quantile-quantile mapping"
+readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "netCDF4>=1.6.5",
-    "numpy>=1.26.0",
-    "pandas>=2.1.0",
+
+authors = [
+    { name = "SWOT-Confluence" },
+    { name = "Mohammadjavad Tourian", email = "tourian@gis.uni-stuttgart.de" },
 ]
+
+maintainers = [
+    { name = "Farid Kurdnezhad", email = "farid.kurdnezhad@unibo.it" },
+    { name = "Siqi Ke", email = "siqi.ke@gis.uni-stuttgart.de" }
+]
+
+
+
+keywords = [
+    "SWOT",
+    "SWOT-Confluence",
+    "hydrology",
+    "river discharge",
+    "quantile-quantile",
+    "flow duration curve"
+]
+
+dependencies = [
+    "netCDF4>=1.6.5,<2.0",
+    "numpy>=1.26.0,<2.0",
+    "pandas>=2.1.0,<3.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/SWOT-Confluence/QQ"
+Repository = "https://github.com/SWOT-Confluence/QQ"
+Issues = "https://github.com/SWOT-Confluence/QQ/issues"
+Documentation = "https://github.com/SWOT-Confluence/QQ/tree/main/documentations"
+Architecture = "https://github.com/SWOT-Confluence/QQ/blob/main/documentations/ARCHITECTURE.md"
+Methodology_v100 = "https://github.com/SWOT-Confluence/QQ/blob/main/documentations/METHODOLOGY_v1.0.0.md"
+Versioning_convention = "https://github.com/SWOT-Confluence/QQ/blob/main/documentations/VERSIONING.md"
+Changelog = "https://github.com/SWOT-Confluence/QQ/blob/main/documentations/CHANGELOG.md"
+Readme = "https://github.com/SWOT-Confluence/QQ/blob/main/README.md"
+
 
 [project.scripts]
 run_qq = "run_qq:main"
+
+[tool.setuptools]
+py-modules = ["run_qq"]
 
 [tool.setuptools.packages.find]
 where = ["."]

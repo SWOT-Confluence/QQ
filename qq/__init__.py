@@ -1,9 +1,12 @@
 """
-qq — SWOT-Confluence FLPE algorithm: QQ discharge estimation.
+QQ discharge estimation algorithm.
 
 Quantile-Quantile mapping from SWOT WSE observations to discharge
 using the SOS Flow Duration Curve.
 """
 
-__version__ = "1.0.0"
-__author__ = "SWOT-Confluence"
+
+from qq.metadata import (
+    PROJECT_AUTHOR as __author__,
+    PROJECT_VERSION as __version__,
+)

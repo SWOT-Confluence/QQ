@@ -1,4 +1,4 @@
-# SWOT-Confluence QQ FLPE algorithm — Python dependencies
+# SWOT-Confluence QQ discharge estimation algorithm — Python dependencies
 #
 # Pin major.minor to match the SWOT-Confluence production environment.
 # Update pins only after compatibility testing.
