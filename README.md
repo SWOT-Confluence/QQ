@@ -209,6 +209,11 @@ Options:
   --quiet               Suppress stdout/stderr logging
   --no-log              Skip writing the .log file
   --plots               Generate optional Plotly diagnostic plots
+  -k, --skip_existing   Skip writing the output NetCDF if the file already exists (default: overwrite).
+  --min_wse_len INT     Minimum clean+filtered SWOT WSE observations required to proceed (default: 50).
+  --use_extended_fdc / --no-use_extended_fdc
+                        Extend SOS FDC to p=0 (q_min) and p=1 (q_max), enabling full-range discharge estimation
+                        (default: `--use_extended_fdc`, i.e. True).
 ```
 
 **Exit codes:** `0` = success or recoverable invalid reach (fill-value NC written) · `1` = unrecoverable infrastructure failure only.

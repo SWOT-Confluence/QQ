@@ -100,6 +100,13 @@ def read_sos(config: QQConfig, state: QQState) -> None:
             state.sos_fdc_table = make_empty_sos_fdc_table()
             return
 
+        # Optional SOS variables — collect metadata if present (non-fatal if absent)
+        for sos_var_name in [C.NAME_SOS_MODEL_GP_QMIN_VAR, C.NAME_SOS_MODEL_GP_QMAX_VAR]:
+            if sos_var_name in sos_dc_model_gp.variables:
+                state.sos_variable_nc_metadata[sos_var_name] = get_nc_var_metadata(
+                    sos_dc_model_gp[sos_var_name]
+                )
+
         # ------------------------------------------------------------------
         # Reach ID lookup
         # ------------------------------------------------------------------
@@ -198,6 +205,149 @@ def read_sos(config: QQConfig, state: QQState) -> None:
             sos_fdc_table_shape=state.sos_fdc_table.shape,
         )
         log_block(config, state, "sos_fdc_table_head", state.sos_fdc_table.head())
+
+        # ------------------------------------------------------------------
+        # Step 2-2-1  OPTIONAL: Extend SOS FDC to [q_min, q_max] endpoints
+        # Gate: FDC table was built successfully above (we would have returned
+        # earlier if any FDC quality gate failed).
+        # ------------------------------------------------------------------
+        section(config, state, "2-2-1 OPTIONAL: EXTEND SOS FDC TO q_min/q_max ENDPOINTS")
+
+        if config.use_extended_fdc_from_sos_qminmax:
+            try:
+                # ---- Read q_min ----
+                if C.NAME_SOS_MODEL_GP_QMIN_VAR not in sos_dc_model_gp.variables:
+                    warn(config, state,
+                         f"FDC extension: variable '{C.NAME_SOS_MODEL_GP_QMIN_VAR}' not found "
+                         "in SOS model group; falling back to original FDC")
+                    state.sos_fdc_extended_flag = C.SOS_FDC_EXTENDED_FLAG_FAILED_QMIN
+                else:
+                    q_min_val = float(np.squeeze(
+                        np.ma.asarray(
+                            sos_dc_model_gp[C.NAME_SOS_MODEL_GP_QMIN_VAR][sos_rid_ridx]
+                        ).filled(np.nan)
+                    ))
+
+                    # ---- Read q_max ----
+                    if C.NAME_SOS_MODEL_GP_QMAX_VAR not in sos_dc_model_gp.variables:
+                        warn(config, state,
+                             f"FDC extension: variable '{C.NAME_SOS_MODEL_GP_QMAX_VAR}' not found "
+                             "in SOS model group; falling back to original FDC")
+                        state.sos_fdc_extended_flag = C.SOS_FDC_EXTENDED_FLAG_FAILED_QMAX
+                    else:
+                        q_max_val = float(np.squeeze(
+                            np.ma.asarray(
+                                sos_dc_model_gp[C.NAME_SOS_MODEL_GP_QMAX_VAR][sos_rid_ridx]
+                            ).filled(np.nan)
+                        ))
+
+                        # ---- Validate q_min ----
+                        if not np.isfinite(q_min_val) or q_min_val < 0:
+                            warn(config, state,
+                                 f"FDC extension: q_min is invalid ({q_min_val:.6g}); "
+                                 "falling back to original FDC")
+                            state.sos_fdc_extended_flag = C.SOS_FDC_EXTENDED_FLAG_FAILED_QMIN
+
+                        # ---- Validate q_max ----
+                        elif not np.isfinite(q_max_val) or q_max_val < 0:
+                            warn(config, state,
+                                 f"FDC extension: q_max is invalid ({q_max_val:.6g}); "
+                                 "falling back to original FDC")
+                            state.sos_fdc_extended_flag = C.SOS_FDC_EXTENDED_FLAG_FAILED_QMAX
+
+                        elif q_max_val < q_min_val:
+                            warn(config, state,
+                                 f"FDC extension: q_max ({q_max_val:.4f}) < q_min ({q_min_val:.4f}); "
+                                 "falling back to original FDC")
+                            state.sos_fdc_extended_flag = C.SOS_FDC_EXTENDED_FLAG_FAILED_QMAX
+
+                        else:
+                            # ---- Build extension rows ----
+                            p_lo = C.FDC_EXTENDED_PROB_AT_QMIN
+                            p_hi = C.FDC_EXTENDED_PROB_AT_QMAX
+
+                            fdc_orig = state.sos_fdc_table.copy()
+                            ext_parts = []
+
+                            # Prepend q_min at p=0.0 only if not already present
+                            if not np.any(np.isclose(fdc_orig["p_non_exceedance"].values, p_lo)):
+                                ext_parts.append(pd.DataFrame([{
+                                    "rank":               0,
+                                    "p_non_exceedance":   p_lo,
+                                    "p_exceedance":       1.0 - p_lo,
+                                    "discharge_quantile": q_min_val,
+                                }]))
+                                log(config, state,
+                                    f"FDC extension: prepending p={p_lo} with "
+                                    f"q_min={q_min_val:.4f} m3/s")
+                            else:
+                                log(config, state,
+                                    f"FDC extension: p={p_lo} already present in FDC; "
+                                    "q_min row not prepended")
+
+                            ext_parts.append(fdc_orig)
+
+                            # Append q_max at p=1.0 only if not already present
+                            if not np.any(np.isclose(fdc_orig["p_non_exceedance"].values, p_hi)):
+                                ext_parts.append(pd.DataFrame([{
+                                    "rank":               len(fdc_orig) + 1,
+                                    "p_non_exceedance":   p_hi,
+                                    "p_exceedance":       1.0 - p_hi,
+                                    "discharge_quantile": q_max_val,
+                                }]))
+                                log(config, state,
+                                    f"FDC extension: appending p={p_hi} with "
+                                    f"q_max={q_max_val:.4f} m3/s")
+                            else:
+                                log(config, state,
+                                    f"FDC extension: p={p_hi} already present in FDC; "
+                                    "q_max row not appended")
+
+                            # ---- Assemble and validate ----
+                            fdc_extended = (
+                                pd.concat(ext_parts, ignore_index=True)
+                                .sort_values("p_non_exceedance")
+                                .reset_index(drop=True)
+                            )
+
+                            if len(fdc_extended) < C.MIN_VALID_SOS_FDC_LEN:
+                                warn(config, state,
+                                     "FDC extension produced a table shorter than "
+                                     f"MIN_VALID_SOS_FDC_LEN ({C.MIN_VALID_SOS_FDC_LEN}); "
+                                     "falling back to original FDC")
+                                state.sos_fdc_extended_flag = C.SOS_FDC_EXTENDED_FLAG_FAILED_CREATION
+
+                            else:
+                                # ---- Success: replace FDC table ----
+                                state.sos_fdc_table = fdc_extended
+                                state.sos_fdc_extended_flag = C.SOS_FDC_EXTENDED_FLAG_SUCCESS
+
+                                log_vars(
+                                    config, state,
+                                    q_min=q_min_val,
+                                    q_max=q_max_val,
+                                    fdc_original_len=len(fdc_orig),
+                                    fdc_extended_len=len(fdc_extended),
+                                    fdc_extended_p_min=fdc_extended["p_non_exceedance"].min(),
+                                    fdc_extended_p_max=fdc_extended["p_non_exceedance"].max(),
+                                    sos_fdc_extended_flag=state.sos_fdc_extended_flag,
+                                )
+                                log_block(config, state,
+                                          "sos_fdc_extended_head", state.sos_fdc_table.head())
+                                log_block(config, state,
+                                          "sos_fdc_extended_tail", state.sos_fdc_table.tail())
+
+            except Exception as ext_exc:
+                warn(config, state,
+                     f"FDC extension failed with unexpected error: {ext_exc}; "
+                     "falling back to original FDC")
+                state.sos_fdc_extended_flag = C.SOS_FDC_EXTENDED_FLAG_FAILED_CREATION
+
+        else:
+            state.sos_fdc_extended_flag = C.SOS_FDC_EXTENDED_FLAG_NOT_ATTEMPTED
+            log(config, state,
+                "FDC extension not attempted (use_extended_fdc_from_sos_qMinMax=False); "
+                "using original FDC")
 
     except Exception as exc:
         fail(config, state, f"SOS FDC extraction failed: {exc}", detailed_code=-402)

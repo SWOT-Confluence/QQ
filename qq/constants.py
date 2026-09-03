@@ -320,6 +320,7 @@ SWOT_QQ_DELIVERABLE_WSE_QUANT_WSE_NAME: str = "QQ_wse_quant_wse"
 SWOT_QQ_DELIVERABLE_WSE_QUANT_FLAG_NAME: str = "QQ_wse_quant_flag"
 SWOT_QQ_DELIVERABLE_INVALID_REACH_DETAILED_FLAG_NAME: str = "QQ_invalid_reach_detailed_flag"
 SWOT_QQ_DELIVERABLE_INVALID_REACH_SUMMARY_FLAG_NAME: str = "QQ_invalid_reach_summary_flag"
+SWOT_QQ_DELIVERABLE_SOS_FDC_EXTENDED_FLAG_NAME: str = "QQ_sos_fdc_extended_flag"
 
 # ---------------------------------------------------------------------------
 # SOS NetCDF group and variable names
@@ -331,14 +332,65 @@ NAME_SOS_MODEL_GP: str = "model"
 NAME_SOS_MODEL_GP_FDC_VAR: str = "flow_duration_q"
 NAME_SOS_MODEL_GP_PROB_VAR: str = "probability"
 
+NAME_SOS_MODEL_GP_QMIN_VAR: str = "Qmin"
+NAME_SOS_MODEL_GP_QMAX_VAR: str = "Qmax"
+
 SOS_VARIABLE_MISSING_VALUES: dict = {
     NAME_SOS_MODEL_GP_PROB_VAR: [-999, -9999, -999999999999.0, np.nan],
     NAME_SOS_MODEL_GP_FDC_VAR:  [-999, -9999, -999999999999.0, np.nan],
+    NAME_SOS_MODEL_GP_QMIN_VAR: [-999, -9999, -999999999999.0, np.nan],
+    NAME_SOS_MODEL_GP_QMAX_VAR: [-999, -9999, -999999999999.0, np.nan],
 }
 
 FDC_MAX_MISSING_PERC_TO_PROCEED: float = 50.0
 FDC_MAX_CONSECUTIVE_MISSING_GAP_TO_PROCEED: int = 25
 MIN_VALID_SOS_FDC_LEN: int = 2
+
+# ---------------------------------------------------------------------------
+# SOS FDC extension — q_min / q_max anchor points
+# ---------------------------------------------------------------------------
+# When use_extended_fdc_from_sos_qMinMax is True (default), the FDC built
+# from the SOS model group is extended to cover the full probability range
+# [FDC_EXTENDED_PROB_AT_QMIN, FDC_EXTENDED_PROB_AT_QMAX] by prepending a
+# row with p=FDC_EXTENDED_PROB_AT_QMIN and Q=q_min, and appending a row
+# with p=FDC_EXTENDED_PROB_AT_QMAX and Q=q_max, both read from the SOS
+# model group for the same reach.
+#
+# This enables discharge estimation across the full [0, 1] probability range
+# (including extremes), because with QUANTILE_MATCHING_FDC_EXTREMES_ESTIMATION=False
+# (active), the matching range is clipped to [min(FDC_p), max(FDC_p)] = [0, 1]
+# when the extended FDC is used — making the clip trivially non-restrictive.
+#
+# The current SOS FDC covers p = 0.01 to p = 0.96 (stored as integer
+# percentages 1-96, divided by 100).  Both p=0.00 and p=1.00 are absent,
+# so no duplicate rows are created during extension.  The extension code
+# verifies this for each reach before inserting the anchor points.
+
+USE_EXTENDED_FDC_FROM_SOS_QMINMAX: bool = True
+
+# Probability values assigned to the q_min and q_max anchor rows.
+# In percent-probability space: QMIN → 0th percentile, QMAX → 100th percentile.
+# In 0-1 probability space (as stored in sos_fdc_table after dividing by 100):
+FDC_EXTENDED_PROB_AT_QMIN: float = 0.0    # probability assigned to q_min (0th percentile)
+FDC_EXTENDED_PROB_AT_QMAX: float = 1.0    # probability assigned to q_max (100th percentile)
+
+# Flag values for the SOS FDC extension outcome (written to QQ_sos_fdc_extended_flag)
+SOS_FDC_EXTENDED_FLAG_NOT_ATTEMPTED: int   =  0   # use_extended_fdc=False, or base FDC gate not passed
+SOS_FDC_EXTENDED_FLAG_SUCCESS: int         =  1   # extended FDC created and used downstream
+SOS_FDC_EXTENDED_FLAG_FAILED_QMIN: int     = -1   # q_min missing or invalid; original FDC used
+SOS_FDC_EXTENDED_FLAG_FAILED_QMAX: int     = -2   # q_max missing or invalid; original FDC used
+SOS_FDC_EXTENDED_FLAG_FAILED_CREATION: int = -3   # extension table creation failed; original FDC used
+
+SOS_FDC_EXTENDED_FLAG_DTYPE = np.int16
+SOS_FDC_EXTENDED_FLAG_ALL_MISSING_VALUE: np.int16 = np.int16(-999)
+
+SOS_FDC_EXTENDED_FLAG_DICT: dict[int, str] = {
+     0:  "not_attempted: use_extended_fdc_from_sos_qMinMax=False or base_FDC_gate_not_passed",
+     1:  "success: fdc_extended_q_MinMax_created_and_used_downstream",
+    -1:  "fallback_to_fdc: q_min_missing_non_finite_or_negative",
+    -2:  "fallback_to_fdc: q_max_missing_non_finite_negative_or_less_than_q_min",
+    -3:  "fallback_to_fdc: extension_table_creation_failed_or_unexpected_error",
+}
 
 # ---------------------------------------------------------------------------
 # Output policy constants
@@ -359,7 +411,9 @@ MIN_VALID_SOS_FDC_LEN: int = 2
 #   "single_missing"          = write a single fill-value element
 
 QQ_OUTPUT_INCLUDE_MISSING_Q: bool = True
-QQ_OUTPUT_TIME_DIMENSION_SOURCE: str = "swot_cleaned_filtered"
+# QQ_OUTPUT_TIME_DIMENSION_SOURCE: str = "swot_cleaned_filtered"
+QQ_OUTPUT_TIME_DIMENSION_SOURCE: str = "swot"
+
 QQ_OUTPUT_TIME_FORMAT: str = "seconds_f8"
 QQ_OUTPUT_ALL_Q_MISSING_Q_ARRAY_MODE: str = "selected_time_dimension"
 QQ_OUTPUT_ALL_Q_MISSING_TIME_ARRAY_MODE: str = "selected_time_dimension"

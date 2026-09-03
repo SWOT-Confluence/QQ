@@ -125,6 +125,42 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    p.add_argument(
+        "-k", "--skip_existing",
+        action="store_true",
+        default=False,
+        help=(
+            "Skip writing the output NetCDF if it already exists at the expected "
+            "path. Default: False (overwrite). Useful when re-running a batch where "
+            "some reaches already have outputs."
+        ),
+    )
+
+    p.add_argument(
+        "--min_wse_len",
+        type=int,
+        default=50,
+        help=(
+            "Minimum number of clean+filtered SWOT WSE observations required to "
+            "proceed with discharge estimation. Reaches with fewer observations are "
+            "flagged invalid (detailed code -321). "
+            "(default: 50, matching the constant MIN_CLEAN_FILT_SWOT_WSE_LEN)"
+        ),
+    )
+
+    p.add_argument(
+        "--use_extended_fdc",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "If True (default), extend the SOS FDC to probability 0.0 (using q_min) "
+            "and 1.0 (using q_max) before quantile matching, enabling discharge "
+            "estimation across the full probability range including extremes. "
+            "If False, use the SOS FDC as-is (probabilities ~0.01–0.96). "
+            "Use --no-use_extended_fdc to disable."
+        ),
+    )
+
     return p
 
 

@@ -324,21 +324,38 @@ def control_wse_count(config: QQConfig, state: QQState) -> None:
 
     try:
         n = state.swot_dc_nt_2_swot_clean_filt
-        if n < C.MIN_CLEAN_FILT_SWOT_WSE_LEN:
+        threshold = config.min_clean_filt_swot_wse_len
+        if n < threshold:
             fail(
                 config, state,
                 f"Invalid reach: only {n} clean/filtered SWOT WSE observations "
-                f"(< {C.MIN_CLEAN_FILT_SWOT_WSE_LEN})",
+                f"(< {threshold})",
                 detailed_code=-321,
             )
+        # n = state.swot_dc_nt_2_swot_clean_filt
+        # if n < C.MIN_CLEAN_FILT_SWOT_WSE_LEN:
+        #     fail(
+        #         config, state,
+        #         f"Invalid reach: only {n} clean/filtered SWOT WSE observations "
+        #         f"(< {C.MIN_CLEAN_FILT_SWOT_WSE_LEN})",
+        #         detailed_code=-321,
+        #     )
         else:
             log(config, state, "Reach passed minimum clean/filtered SWOT WSE count control")
     except Exception as exc:
         fail(config, state, f"SWOT WSE count control failed: {exc}", detailed_code=-321)
 
+    # log_vars(
+    #     config, state,
+    #     invalid_reach=state.invalid_reach,
+    #     swot_dc_nt_2_swot_clean_filt=state.swot_dc_nt_2_swot_clean_filt,
+    #     min_clean_filt_swot_wse_len=C.MIN_CLEAN_FILT_SWOT_WSE_LEN,
+    # )
+
     log_vars(
         config, state,
         invalid_reach=state.invalid_reach,
         swot_dc_nt_2_swot_clean_filt=state.swot_dc_nt_2_swot_clean_filt,
-        min_clean_filt_swot_wse_len=C.MIN_CLEAN_FILT_SWOT_WSE_LEN,
+        min_clean_filt_swot_wse_len=config.min_clean_filt_swot_wse_len,
+        min_clean_filt_swot_wse_len_constant_default=C.MIN_CLEAN_FILT_SWOT_WSE_LEN,
     )

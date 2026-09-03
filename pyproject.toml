@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swot-confluence-qq"
-version = "1.0.1"
+version = "1.1.0"
 description = "SWOT-Confluence QQ discharge estimation algorithm: reach-based quantile-quantile mapping"
 readme = "README.md"
 requires-python = ">=3.10"

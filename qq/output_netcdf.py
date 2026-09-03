@@ -168,6 +168,13 @@ def write_nc(config: QQConfig, state: QQState) -> None:
     """
     section(config, state, "4-1 WRITE QQ OUTPUT NETCDF")
 
+    # Skip if file already exists and caller requested skip_existing
+    if config.skip_existing and state.output_nc_path.exists():
+        log(config, state,
+            f"skip_existing=True: output NC already exists; skipping write: "
+            f"{state.output_nc_path}")
+        return
+
     # For every generated NetCDF, QQ determines:
     created_utc = M.utc_now_iso()                   # when it was created
     software_git_commit = M.get_git_commit()        # which exact Git commit produced it
@@ -355,6 +362,21 @@ def write_nc(config: QQConfig, state: QQState) -> None:
             sum_flag_var.units           = "1"
             sum_flag_var.flag_definition = json.dumps(C.INVALID_REACH_SUMMARY_FLAG_DICT)
             sum_flag_var.assignValue(np.int32(state.invalid_reach_summary_code))
+
+            # ----------------------------------------------------------------
+            # ROOT SCALAR: QQ_sos_fdc_extended_flag
+            # ----------------------------------------------------------------
+            fdc_ext_flag_var = qq_nc.createVariable(
+                C.SWOT_QQ_DELIVERABLE_SOS_FDC_EXTENDED_FLAG_NAME, "i2", (),
+                fill_value=C.SOS_FDC_EXTENDED_FLAG_ALL_MISSING_VALUE,
+            )
+            fdc_ext_flag_var.long_name       = "SOS_FDC_extension_outcome_flag"
+            fdc_ext_flag_var.units           = "1"
+            fdc_ext_flag_var.missing_value   = C.SOS_FDC_EXTENDED_FLAG_ALL_MISSING_VALUE
+            fdc_ext_flag_var.flag_definition = json.dumps(C.SOS_FDC_EXTENDED_FLAG_DICT)
+            fdc_ext_flag_var.assignValue(
+                C.SOS_FDC_EXTENDED_FLAG_DTYPE(state.sos_fdc_extended_flag)
+            )
 
             # ----------------------------------------------------------------
             # GROUP "q"

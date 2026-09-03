@@ -82,6 +82,9 @@ def prepare_output_arrays(config: QQConfig, state: QQState) -> None:  # noqa: PL
             from qq.helpers import make_empty_qq_matched_df
             state.qq_matched_df = make_empty_qq_matched_df(config)
 
+        if not hasattr(state, "sos_fdc_extended_flag") or state.sos_fdc_extended_flag is None:
+            state.sos_fdc_extended_flag = 0   # SOS_FDC_EXTENDED_FLAG_NOT_ATTEMPTED
+
         # ------------------------------------------------------------------
         # 3-1-1  Control output policy constants
         # ------------------------------------------------------------------

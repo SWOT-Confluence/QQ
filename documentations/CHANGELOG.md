@@ -93,3 +93,68 @@ This file records user-visible and scientifically relevant changes between QQ ve
 
 
 ## [1.1.0] — Unreleased: Under Development
+
+**Scientific behavior**
+
+- Changed default `QQ_OUTPUT_TIME_DIMENSION_SOURCE` from `"swot_cleaned_filtered"` to `"swot"`.
+  The output NetCDF `nt` dimension now spans all original SWOT observations (nt1), not only
+  the clean+filtered subset (nt3). The `QQ_q_status_flag` variable distinguishes each row:
+  `removed_by_cleaning`, `removed_by_filtering`, `no_quantile_applied`, or `valid_q_estimated`.
+  This increases the output file size proportionally but preserves the full SWOT timeline.
+
+- Added optional SOS FDC extension (`use_extended_fdc_from_sos_qMinMax`, default True).
+  When enabled, the SOS flow-duration curve is extended to probability 0.0 using q_min
+  and to probability 1.0 using q_max (both read from the SOS model group for the reach),
+  creating `fdc_extended_q_MinMax`. The extended FDC is used in place of the original
+  throughout the pipeline (quantile matching and WSE-Q lookup table). This enables
+  discharge estimation across the full 0–100 % probability range, including extreme flows.
+  If the extension cannot be created (q_min/q_max missing or invalid), the code falls
+  back transparently to the original FDC and records the failure in the new
+  `QQ_sos_fdc_extended_flag` NetCDF variable. No change when the flag is False.
+
+- The WSE empirical quantile already covered [0, 1] inclusive via `WSE_PROB_GRID_MIN_PCT=0.0`
+  and `WSE_PROB_GRID_MAX_PCT=100.0` (no change). Confirmed by this release.
+
+- Extreme flow estimation: with the extended FDC covering p∈[0, 1], the existing
+  `QUANTILE_MATCHING_FDC_EXTREMES_ESTIMATION=False` clip becomes [0.0, 1.0] — trivially
+  non-restrictive. No change to quantile-matching constants was required.
+
+**New CLI arguments**
+
+- `-k` / `--skip_existing`: skip writing the output NetCDF if the file already exists.
+  Default False (always overwrite). Useful for resuming interrupted batch runs.
+
+- `--min_wse_len INT`: runtime override for the minimum clean+filtered SWOT WSE
+  observation count (default 50, matching `MIN_CLEAN_FILT_SWOT_WSE_LEN`).
+
+- `--use_extended_fdc` / `--no-use_extended_fdc`: toggle the FDC extension described
+  above. Default True.
+
+**New constants**
+
+- `NAME_SOS_MODEL_GP_QMIN_VAR`, `NAME_SOS_MODEL_GP_QMAX_VAR`: SOS model group variable
+  names for the per-reach minimum and maximum discharge.
+- `FDC_EXTENDED_PROB_AT_QMIN = 0.0`, `FDC_EXTENDED_PROB_AT_QMAX = 1.0`: probability
+  anchors for the q_min and q_max extension rows.
+- `USE_EXTENDED_FDC_FROM_SOS_QMINMAX`: default True; controls the FDC extension.
+- `SOS_FDC_EXTENDED_FLAG_*`: flag integer constants and dictionary.
+- `SWOT_QQ_DELIVERABLE_SOS_FDC_EXTENDED_FLAG_NAME`: NetCDF variable name for the flag.
+
+**New NetCDF output**
+
+- `QQ_sos_fdc_extended_flag` (scalar i2, root): records whether the FDC extension was
+  not attempted (0), succeeded (1), or fell back to the original FDC with a reason code
+  (−1 q_min unavailable, −2 q_max unavailable, −3 creation failed).
+
+**New runtime config fields**
+
+- `QQConfig.skip_existing`, `QQConfig.min_clean_filt_swot_wse_len`,
+  `QQConfig.use_extended_fdc_from_sos_qminmax`.
+
+**Compatibility**
+
+- The `QQ_sos_fdc_extended_flag` variable is a new addition; existing readers ignoring
+  unknown variables are unaffected.
+- The `nt` dimension size change (from nt3 to nt1) is a breaking schema change for
+  downstream consumers that rely on the dimension size matching the clean+filtered count.
+  All SWOT-Confluence pipeline modules that read QQ output should be verified.

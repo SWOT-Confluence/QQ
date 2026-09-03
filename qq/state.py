@@ -89,6 +89,8 @@ class QQState:
     # ------------------------------------------------------------------
     sos_variable_nc_metadata: dict
     sos_fdc_table: pd.DataFrame
+
+    sos_fdc_extended_flag: int   # C.SOS_FDC_EXTENDED_FLAG_* values
     
     
     
@@ -172,3 +174,5 @@ class QQState:
         # Metadata stores (filled in during NC read)
         self.swot_reach_field_nc_metadata = {}
         self.sos_variable_nc_metadata = {}
+
+        self.sos_fdc_extended_flag = 0   # SOS_FDC_EXTENDED_FLAG_NOT_ATTEMPTED

@@ -60,6 +60,16 @@ class QQConfig:
     make_interactive_plots : bool
         Whether to render Plotly diagnostic plots (requires plotly to be
         installed; silently skipped if not available or if False).
+
+    skip_existing : bool
+        If True, skip writing the output NetCDF when it already exists at the
+        expected path.  Default False (always overwrite).
+    min_clean_filt_swot_wse_len : int
+        Runtime override for the minimum clean+filtered SWOT WSE observation
+        count required to proceed.  Default matches C.MIN_CLEAN_FILT_SWOT_WSE_LEN (50).
+    use_extended_fdc_from_sos_qminmax : bool
+        If True, extend the SOS FDC with q_min (at p=0.0) and q_max (at p=1.0)
+        from the SOS model group before quantile matching.  Default True.
     """
 
     index: int = 0
@@ -69,6 +79,9 @@ class QQConfig:
     print_out_statements: bool = True
     save_log_file: bool = True
     make_interactive_plots: bool = False
+    skip_existing: bool = False
+    min_clean_filt_swot_wse_len: int = 50
+    use_extended_fdc_from_sos_qminmax: bool = True
 
     # Resolved lazily during the first pipeline step.
     _json_path: Path | None = field(default=None, init=False, repr=False)
@@ -103,4 +116,7 @@ class QQConfig:
             print_out_statements=not getattr(args, "quiet", False),
             save_log_file=not getattr(args, "no_log", False),
             make_interactive_plots=getattr(args, "plots", False),
+            skip_existing=getattr(args, "skip_existing", False),
+            min_clean_filt_swot_wse_len=getattr(args, "min_wse_len", 50),
+            use_extended_fdc_from_sos_qminmax=getattr(args, "use_extended_fdc", True),
         )
