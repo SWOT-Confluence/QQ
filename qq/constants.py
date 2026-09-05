@@ -332,8 +332,8 @@ NAME_SOS_MODEL_GP: str = "model"
 NAME_SOS_MODEL_GP_FDC_VAR: str = "flow_duration_q"
 NAME_SOS_MODEL_GP_PROB_VAR: str = "probability"
 
-NAME_SOS_MODEL_GP_QMIN_VAR: str = "Qmin"
-NAME_SOS_MODEL_GP_QMAX_VAR: str = "Qmax"
+NAME_SOS_MODEL_GP_QMIN_VAR: str = "min_q"
+NAME_SOS_MODEL_GP_QMAX_VAR: str = "max_q"
 
 SOS_VARIABLE_MISSING_VALUES: dict = {
     NAME_SOS_MODEL_GP_PROB_VAR: [-999, -9999, -999999999999.0, np.nan],
